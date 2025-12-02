@@ -1,0 +1,160 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply transition-colors duration-200;
+  }
+  
+  body {
+    @apply bg-gradient-to-br from-neutral-50 via-white to-blue-50 text-neutral-900 font-sans antialiased;
+  }
+  
+  body.dark {
+    @apply bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 text-neutral-100;
+  }
+}
+
+@layer components {
+  /* Premium Button Styles */
+  .btn-primary {
+    @apply px-4 py-2 bg-primary-500 text-white rounded-premium font-medium 
+           hover:bg-primary-600 active:scale-95 transition-all duration-150 
+           shadow-premium hover:shadow-premium-lg;
+  }
+  
+  .btn-secondary {
+    @apply px-4 py-2 bg-neutral-100 text-neutral-700 rounded-premium font-medium 
+           hover:bg-neutral-200 active:scale-95 transition-all duration-150;
+  }
+  
+  /* Premium Card Styles */
+  .card {
+    @apply bg-white dark:bg-neutral-800 rounded-card shadow-card 
+           hover:shadow-premium transition-shadow duration-200 p-6;
+  }
+  
+  .card-compact {
+    @apply bg-white dark:bg-neutral-800 rounded-premium shadow-card p-4;
+  }
+  
+  /* Grid Cell Styles */
+  .grid-cell {
+    @apply relative aspect-square rounded-premium cursor-pointer 
+           transition-all duration-200 overflow-hidden
+           hover:scale-105 hover:shadow-premium-lg hover:z-10;
+  }
+  
+  .grid-cell-gray {
+    @apply bg-neutral-200 dark:bg-neutral-700;
+  }
+  
+  .grid-cell-yellow {
+    @apply bg-gradient-to-br from-warning-300 to-warning-500;
+  }
+  
+  .grid-cell-green {
+    @apply bg-gradient-to-br from-success-400 to-success-600;
+  }
+  
+  /* Progress Bar */
+  .progress-bar {
+    @apply h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden;
+  }
+  
+  .progress-fill {
+    @apply h-full bg-gradient-to-r from-primary-400 to-primary-600 
+           transition-all duration-300 ease-out rounded-full;
+  }
+  
+  /* Input Styles */
+  .input-premium {
+    @apply w-full px-4 py-2 rounded-premium border border-neutral-300 
+           dark:border-neutral-600 bg-white dark:bg-neutral-800 
+           focus:outline-none focus:ring-2 focus:ring-primary-500 
+           transition-all duration-150;
+  }
+  
+  /* Checkbox Styles */
+  .checkbox-premium {
+    @apply w-5 h-5 rounded border-2 border-neutral-300 dark:border-neutral-600 
+           checked:bg-success-500 checked:border-success-500 
+           transition-all duration-150 cursor-pointer;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-500 to-success-500;
+  }
+  
+  .glass {
+    @apply bg-white/80 dark:bg-neutral-800/80 backdrop-blur-md;
+  }
+  
+  /* Animations */
+  .animate-in {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  .fade-in {
+    animation: fadeIn 0.2s ease-in;
+  }
+  
+  .scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+  
+  /* Scrollbar Styles */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-neutral-100 dark:bg-neutral-800;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-neutral-300 dark:bg-neutral-600 rounded-full;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    @apply bg-neutral-400 dark:bg-neutral-500;
+  }
+}
+
+/* Custom Micro-interactions */
+.habit-checkbox {
+  @apply relative inline-flex items-center justify-center;
+}
+
+.habit-checkbox input:checked + label {
+  @apply line-through text-neutral-400;
+}
+
+.habit-checkbox input:checked + label::before {
+  @apply scale-100 opacity-100;
+}
+
+/* Modal Overlay */
+.modal-overlay {
+  @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-40 
+         animate-fade-in flex items-center justify-center;
+}
+
+.modal-content {
+  @apply bg-white dark:bg-neutral-800 rounded-card shadow-premium-lg 
+         max-w-2xl w-full mx-4 max-h-[90vh] overflow-auto 
+         animate-scale-in scrollbar-thin;
+}
+
+/* Streak Badge */
+.streak-badge {
+  @apply inline-flex items-center px-3 py-1 rounded-full 
+         bg-gradient-to-r from-warning-400 to-warning-500 
+         text-white font-semibold text-sm shadow-premium;
+}
