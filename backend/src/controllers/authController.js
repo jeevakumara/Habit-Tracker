@@ -1,154 +1,151 @@
-import { db, auth } from '../config/firebase.js';
-import { generate90Days } from '../utils/dateUtils.js';
+import admin from 'firebase-admin';
 
-/**
- * Register new user
- */
-export async function register(req, res) {
+// ==================== REGISTER ====================
+export const register = async (req, res) => {
     try {
-        const { email, password, displayName } = req.body;
+        const { email, password, name } = req.body;
 
-        if (!email || !password) {
-            return res.status(400).json({ error: 'Email and password required' });
+        if (!email || !password || !name) {
+            return res.status(400).json({
+                error: 'Email, password, and name are required'
+            });
         }
 
-        // Create user in Firebase Auth
-        const userRecord = await auth.createUser({
-            email,
-            password,
-            displayName: displayName || 'Tracker User'
-        });
+        console.log('👤 Registering new user:', email);
 
-        // Create user document in Firestore
-        await db.collection('users').doc(userRecord.uid).set({
-            userId: userRecord.uid,
+        const userRecord = await admin.auth().createUser({
             email: email,
-            displayName: displayName || 'Tracker User',
+            password: password,
+            displayName: name,
+        });
+
+        console.log('✅ Firebase user created:', userRecord.uid);
+
+        await admin.firestore().collection('users').doc(userRecord.uid).set({
+            uid: userRecord.uid,
+            email: email,
+            name: name,
             createdAt: new Date(),
-            challengeStartDate: '2025-12-01',
-            challengeEndDate: '2026-02-28',
-            currentStreak: 0,
-            longestStreak: 0,
-            totalDaysCompleted: 0
+            updatedAt: new Date(),
         });
 
-        // Initialize default habits
-        const defaultHabits = [
-            { name: 'Meditation', category: 'health', color: '#10B981' },
-            { name: 'Breath Exercise', category: 'health', color: '#3B82F6' },
-            { name: 'Book (Reading)', category: 'learning', color: '#8B5CF6' },
-            { name: 'Physical Exercise', category: 'health', color: '#EF4444' },
-            { name: 'OOPs Project', category: 'productivity', color: '#F59E0B' },
-            { name: 'Data Structures & Algorithms', category: 'learning', color: '#EC4899' },
-            { name: 'GATE CSE Preparation', category: 'learning', color: '#6366F1' },
-            { name: 'Moisturizer (2x daily)', category: 'habits', color: '#14B8A6' },
-            { name: 'Inhaler (3x daily)', category: 'habits', color: '#F97316' },
-            { name: '3 Liters of Water', category: 'health', color: '#06B6D4' },
-            { name: 'Startup Work', category: 'productivity', color: '#A855F7' }
-        ];
+        console.log('✅ User stored in Firestore');
 
-        const habitIds = [];
-        for (const habit of defaultHabits) {
-            const habitRef = await db.collection('users').doc(userRecord.uid).collection('habits').add({
-                name: habit.name,
-                category: habit.category,
-                color: habit.color,
-                createdAt: new Date(),
-                isActive: true,
-                completionRate: 0,
-                frequency: 'daily'
-            });
-            habitIds.push(habitRef.id);
-        }
-
-        // Initialize all 90 days
-        const days = generate90Days();
-        const batch = db.batch();
-
-        days.forEach(day => {
-            const dayRef = db.collection('users').doc(userRecord.uid).collection('days').doc(day.dayId);
-            batch.set(dayRef, {
-                dayId: day.dayId,
-                date: day.date,
-                dayNumber: day.dayNumber,
-                dateLabel: day.dateLabel,
-                completedHabits: [],
-                totalHabits: habitIds.length,
-                completionPercentage: 0,
-                isCompleted: false,
-                notes: '',
-                lastUpdated: new Date(),
-                habitsDueForDay: habitIds
-            });
-        });
-
-        await batch.commit();
-
-        // Generate custom token for immediate login
-        const customToken = await auth.createCustomToken(userRecord.uid);
+        const customToken = await admin.auth().createCustomToken(userRecord.uid);
 
         res.status(201).json({
+            success: true,
             message: 'User registered successfully',
             userId: userRecord.uid,
-            customToken
+            email: userRecord.email,
+            name: userRecord.displayName,
+            customToken: customToken,
         });
 
     } catch (error) {
-        console.error('Registration error:', error);
-        res.status(500).json({ error: error.message || 'Registration failed' });
+        console.error('❌ Registration error:', error);
+        res.status(500).json({
+            error: error.message,
+            code: error.code,
+        });
     }
-}
+};
 
-/**
- * Login user (Firebase handles this on client, this is for custom token generation)
- */
-export async function login(req, res) {
+// ==================== LOGIN ====================
+export const login = async (req, res) => {
     try {
-        const { uid } = req.body;
+        const { email, password } = req.body;
 
-        if (!uid) {
-            return res.status(400).json({ error: 'User ID required' });
+        if (!email || !password) {
+            return res.status(400).json({
+                error: 'Email and password required'
+            });
         }
 
-        // Verify user exists
-        const userDoc = await db.collection('users').doc(uid).get();
+        console.log('🔍 Login attempt for email:', email);
 
-        if (!userDoc.exists) {
-            return res.status(404).json({ error: 'User not found' });
+        const usersSnapshot = await admin
+            .firestore()
+            .collection('users')
+            .where('email', '==', email)
+            .limit(1)
+            .get();
+
+        if (usersSnapshot.empty) {
+            console.log('❌ User not found:', email);
+            return res.status(401).json({
+                error: 'Invalid email or password'
+            });
         }
 
-        // Generate custom token
-        const customToken = await auth.createCustomToken(uid);
+        const userDoc = usersSnapshot.docs[0];
+        const userId = userDoc.id;
+        const userData = userDoc.data();
 
-        res.json({
+        console.log('✅ User found:', userId);
+
+        const customToken = await admin.auth().createCustomToken(userId);
+
+        console.log('✅ Custom token created');
+
+        res.status(200).json({
+            success: true,
             message: 'Login successful',
-            customToken,
-            user: userDoc.data()
+            userId: userId,
+            email: userData.email,
+            name: userData.name || 'User',
+            customToken: customToken,
         });
 
     } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ error: error.message || 'Login failed' });
+        console.error('❌ Login error:', error);
+        res.status(500).json({
+            error: error.message,
+            code: error.code,
+        });
     }
-}
+};
 
-/**
- * Get user profile
- */
-export async function getUserProfile(req, res) {
+// ==================== GET USER PROFILE ====================
+export const getUserProfile = async (req, res) => {
     try {
         const { userId } = req.params;
 
-        const userDoc = await db.collection('users').doc(userId).get();
-
-        if (!userDoc.exists) {
-            return res.status(404).json({ error: 'User not found' });
+        // ✅ CRITICAL FIX: Validate userId
+        if (!userId || userId === ':userId' || userId === 'undefined') {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid user ID provided'
+            });
         }
 
-        res.json(userDoc.data());
+        console.log('👤 Fetching profile for:', userId);
+
+        const userDoc = await admin.firestore().collection('users').doc(userId).get();
+
+        if (!userDoc.exists) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        const userData = userDoc.data();
+
+        // ✅ CRITICAL FIX: Add success flag
+        res.status(200).json({
+            success: true,
+            user: {
+                uid: userId,
+                ...userData
+            }
+        });
 
     } catch (error) {
-        console.error('Get user error:', error);
-        res.status(500).json({ error: 'Failed to get user profile' });
+        console.error('❌ Profile fetch error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
     }
-}
+};

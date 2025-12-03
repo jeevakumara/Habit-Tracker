@@ -1,3 +1,5 @@
+import { Day } from '../types';
+
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 class ApiService {
@@ -54,7 +56,23 @@ class ApiService {
 
     // Habits endpoints
     async getHabits(userId: string) {
-        return this.request(`/api/users/${userId}/habits`);
+        console.log('🔍 Fetching habits for user:', userId);
+
+        const response = await this.request(`/api/users/${userId}/habits`);
+
+        console.log('✅ Habits response:', response);
+
+        // ✅ CRITICAL FIX: Validate response format
+        if (!response.success) {
+            throw new Error(response.error || 'Failed to fetch habits');
+        }
+
+        if (!Array.isArray(response.habits)) {
+            throw new Error('Invalid response format: habits is not an array');
+        }
+
+        console.log(`✅ Loaded ${response.habits.length} habits`);
+        return response;
     }
 
     async addHabit(userId: string, habit: { name: string; category?: string; color?: string }) {
@@ -79,17 +97,38 @@ class ApiService {
 
     // Days endpoints
     async getDays(userId: string) {
-        return this.request(`/api/users/${userId}/days`);
+        console.log('🔍 Fetching days for user:', userId);
+
+        const response = await this.request(`/api/users/${userId}/days`);
+
+        console.log('✅ Days response:', response);
+
+        // ✅ CRITICAL FIX: Validate response format
+        if (!response.success) {
+            throw new Error(response.error || 'Failed to fetch days');
+        }
+
+        if (!Array.isArray(response.days)) {
+            throw new Error('Invalid response format: days is not an array');
+        }
+
+        console.log(`✅ Loaded ${response.days.length} days`);
+        return response;
     }
 
-    async getDayData(userId: string, dayId: string) {
-        return this.request(`/api/users/${userId}/days/${dayId}`);
+    async getDayData(userId: string, dayId: string): Promise<Day> {
+        const res = await this.request(`/api/users/${userId}/days/${dayId}`);
+        if (!res.success || !res.day) {
+            throw new Error(res.error || 'Failed to load day');
+        }
+        return res.day;
     }
 
-    async updateDayHabits(userId: string, dayId: string, habitId: string, isCompleted: boolean) {
+    async updateDayHabits(userId: string, dayId: string, data: { habits: Record<string, boolean> }) {
+        console.log('💾 Updating habits for day:', dayId);
         return this.request(`/api/users/${userId}/days/${dayId}`, {
             method: 'PUT',
-            body: JSON.stringify({ habitId, isCompleted }),
+            body: JSON.stringify(data),
         });
     }
 

@@ -12,7 +12,7 @@ const HabitCheckbox: React.FC<HabitCheckboxProps> = ({ habit, isChecked, onToggl
 
     const handleToggle = () => {
         setIsAnimating(true);
-        onToggle(habit.habitId, !isChecked);
+        onToggle(habit.habitId || habit.id, !isChecked);
         setTimeout(() => setIsAnimating(false), 300);
     };
 
@@ -24,14 +24,14 @@ const HabitCheckbox: React.FC<HabitCheckboxProps> = ({ habit, isChecked, onToggl
         >
             <input
                 type="checkbox"
-                id={habit.habitId}
+                id={habit.habitId || habit.id}
                 checked={isChecked}
                 onChange={handleToggle}
                 className="checkbox-premium"
                 style={{ accentColor: habit.color }}
             />
             <label
-                htmlFor={habit.habitId}
+                htmlFor={habit.habitId || habit.id}
                 className={`flex-1 cursor-pointer font-medium transition-all duration-200 
                     ${isChecked ? 'line-through text-neutral-400' : 'text-neutral-700 dark:text-neutral-200'}`}
             >

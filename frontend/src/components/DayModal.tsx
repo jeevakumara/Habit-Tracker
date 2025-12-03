@@ -1,8 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Day } from '../types';
-import { useTrackerStore } from '../store/useTrackerStore';
-import HabitCheckbox from './HabitCheckbox';
-import ProgressBar from './ProgressBar';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Day, Habit } from '../types';
 import api from '../services/api';
 
 interface DayModalProps {
@@ -13,138 +10,215 @@ interface DayModalProps {
 }
 
 const DayModal: React.FC<DayModalProps> = ({ isOpen, day, userId, onClose }) => {
+    const [habits, setHabits] = useState<Habit[]>([]);
+    const [habitStatus, setHabitStatus] = useState<Record<string, boolean>>({});
     const [notes, setNotes] = useState('');
-    const [isSaving, setIsSaving] = useState(false);
-    const { updateDay, showToast, setAnalytics } = useTrackerStore();
+    const [loading, setLoading] = useState(false);
+    const [saving, setSaving] = useState(false);
 
-    useEffect(() => {
-        if (day) {
-            setNotes(day.notes || '');
-        }
-    }, [day]);
+    const loadHabitsAndStatus = useCallback(async () => {
+        if (!day) return;
 
-    if (!isOpen || !day) return null;
-
-    const handleHabitToggle = async (habitId: string, isChecked: boolean) => {
+        setLoading(true);
         try {
-            const response = await api.updateDayHabits(userId, day.dayId, habitId, isChecked);
+            console.log('🔍 Loading habits for day:', day.dayId || day.id);
 
-            // Update local state optimistically
-            const updatedCompletedHabits = isChecked
-                ? [...(day.completedHabits || []), habitId]
-                : (day.completedHabits || []).filter(id => id !== habitId);
+            // Fetch all habits for the user
+            const habitsResponse = await api.getHabits(userId);
+            const allHabits = habitsResponse.habits || [];
 
-            updateDay(day.dayId, {
-                completedHabits: updatedCompletedHabits,
-                completionPercentage: response.completionPercentage,
-                isCompleted: response.isCompleted,
+            console.log('✅ Loaded habits:', allHabits.length);
+            setHabits(allHabits);
+
+            // Initialize habit status from day data
+            const status: Record<string, boolean> = {};
+
+            // If day.habits is enriched with full habit objects:
+            if (Array.isArray(day.habits) && day.habits.length > 0) {
+                day.habits.forEach((h: any) => {
+                    status[h.id || h.habitId] = Boolean(h.isCompleted);
+                });
+            } else if (day.completedHabits && Array.isArray(day.completedHabits)) {
+                // Fallback: use completedHabits array
+                const completedSet = new Set(day.completedHabits);
+                allHabits.forEach((habit: Habit) => {
+                    status[habit.id] = completedSet.has(habit.id);
+                });
+            } else {
+                // Default: all uncompleted
+                allHabits.forEach((habit: Habit) => {
+                    status[habit.id] = false;
+                });
+            }
+
+            setHabitStatus(status);
+            setNotes(day.notes || '');
+
+            console.log('✅ Habit status initialized:', status);
+        } catch (error) {
+            console.error('❌ Failed to load habits:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, [day, userId]);
+
+    // Load habits and initialize state when modal opens
+    useEffect(() => {
+        if (isOpen && day) {
+            loadHabitsAndStatus();
+        }
+    }, [isOpen, day, loadHabitsAndStatus]);
+
+    const handleToggleHabit = async (habitId: string) => {
+        if (!day || saving) return;
+
+        const newStatus = {
+            ...habitStatus,
+            [habitId]: !habitStatus[habitId]
+        };
+
+        // Optimistic update
+        setHabitStatus(newStatus);
+
+        try {
+            setSaving(true);
+
+            // Update backend
+            await api.updateDayHabits(userId, day.dayId || day.id, {
+                habits: newStatus
             });
 
-            // Update analytics and user streaks
-            setAnalytics({
-                currentStreak: response.currentStreak,
-                longestStreak: response.longestStreak,
-                totalDaysCompleted: 0,
-                overallCompletion: 0,
-                daysRemaining: 0,
-                totalDays: 90,
-            });
-
-            showToast(isChecked ? 'Habit completed! 🎉' : 'Habit unmarked', isChecked ? 'success' : 'info');
-        } catch (error: any) {
-            console.error('Failed to update habit:', error);
-            showToast('Failed to update habit', 'error');
+            console.log('✅ Habit toggled successfully');
+        } catch (error) {
+            console.error('❌ Failed to toggle habit:', error);
+            // Revert on error
+            setHabitStatus(habitStatus);
+        } finally {
+            setSaving(false);
         }
     };
 
     const handleSaveNotes = async () => {
+        if (!day) return;
+
         try {
-            setIsSaving(true);
+            setSaving(true);
             await api.updateDayNotes(userId, day.dayId, notes);
-            updateDay(day.dayId, { notes });
-            showToast('Notes saved!', 'success');
+            console.log('✅ Notes saved');
         } catch (error) {
-            showToast('Failed to save notes', 'error');
+            console.error('❌ Failed to save notes:', error);
         } finally {
-            setIsSaving(false);
+            setSaving(false);
         }
     };
 
+    // Calculate completion percentage
+    const calculateCompletion = () => {
+        const total = habits.length;
+        if (total === 0) return 0;
+
+        const completed = Object.values(habitStatus).filter(Boolean).length;
+        return Math.round((completed / total) * 100);
+    };
+
+    const completionPercentage = calculateCompletion();
+    const completedCount = Object.values(habitStatus).filter(Boolean).length;
+
+    if (!isOpen || !day) return null;
+
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                {/* Header */}
-                <div className="sticky top-0 bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 p-6 rounded-t-card">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h2 className="text-2xl font-bold text-neutral-800 dark:text-neutral-100">
-                                Day {day.dayNumber} - {day.dateLabel}
-                            </h2>
-                            <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-                                {day.dayId}
-                            </p>
-                        </div>
-                        <button
-                            onClick={onClose}
-                            className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors text-3xl leading-none"
-                        >
-                            ×
-                        </button>
+        <div
+            className="modal-overlay"
+            onClick={onClose}
+        >
+            <div
+                className="modal-content"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* Modal Header */}
+                <div className="modal-header">
+                    <div>
+                        <h2 className="modal-title">Day {day.dayNumber}</h2>
+                        <p className="modal-subtitle">{day.dateLabel || day.date}</p>
                     </div>
-
-                    {/* Progress Bar */}
-                    <div className="mt-4">
-                        <ProgressBar percentage={day.completionPercentage} />
-                    </div>
-
-                    <div className="mt-3 text-center">
-                        <span className="text-sm font-semibold text-neutral-600 dark:text-neutral-400">
-                            {day.completedHabits?.length || 0} of {day.totalHabits} habits completed
-                        </span>
-                    </div>
+                    <button
+                        className="close-btn"
+                        onClick={onClose}
+                    >
+                        ×
+                    </button>
                 </div>
 
-                {/* Habits List */}
-                <div className="p-6">
-                    <h3 className="text-lg font-bold text-neutral-800 dark:text-neutral-100 mb-4">
-                        Today's Habits
-                    </h3>
-                    <div className="space-y-2">
-                        {day.habits && day.habits.length > 0 ? (
-                            day.habits.map((habit) => (
-                                <HabitCheckbox
-                                    key={habit.habitId}
-                                    habit={habit}
-                                    isChecked={day.completedHabits?.includes(habit.habitId) || false}
-                                    onToggle={handleHabitToggle}
-                                />
-                            ))
-                        ) : (
-                            <p className="text-neutral-500 text-center py-8">No habits for this day</p>
-                        )}
-                    </div>
-
-                    {/* Notes Section */}
-                    <div className="mt-6">
-                        <label className="block text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2">
-                            Notes (Optional)
-                        </label>
-                        <textarea
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            className="input-premium min-h-24 resize-none"
-                            placeholder="How did today go? Any reflections or insights..."
-                        />
-                        <div className="mt-2 flex justify-end">
-                            <button
-                                onClick={handleSaveNotes}
-                                disabled={isSaving}
-                                className="btn-primary"
-                            >
-                                {isSaving ? 'Saving...' : 'Save Notes'}
-                            </button>
+                {/* Modal Body */}
+                <div className="modal-body">
+                    {loading ? (
+                        <div className="loading-state">
+                            <div className="spinner"></div>
+                            <p>Loading habits...</p>
                         </div>
-                    </div>
+                    ) : (
+                        <>
+                            {/* Progress Section */}
+                            <div className="progress-section">
+                                <h3>Progress</h3>
+                                <div className="progress-bar">
+                                    <div
+                                        className="progress-fill"
+                                        style={{ width: `${completionPercentage}%` }}
+                                    />
+                                </div>
+                                <p className="progress-text">
+                                    {completedCount} of {habits.length} habits completed ({completionPercentage}%)
+                                </p>
+                            </div>
+
+                            {/* Habits Section */}
+                            <div className="habits-section">
+                                <h3>Today's Habits</h3>
+
+                                {habits.length === 0 ? (
+                                    <div className="no-habits">
+                                        <p>No habits configured.</p>
+                                        <p className="text-sm">Go to Settings to add habits.</p>
+                                    </div>
+                                ) : (
+                                    <div className="habits-list">
+                                        {habits.map((habit) => (
+                                            <label
+                                                key={habit.id}
+                                                className={`habit-item ${habitStatus[habit.id] ? 'completed' : ''}`}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={Boolean(habitStatus[habit.id])}
+                                                    onChange={() => handleToggleHabit(habit.id)}
+                                                    disabled={saving}
+                                                />
+                                                <span className="habit-icon">{habit.icon || '✓'}</span>
+                                                <span className="habit-name">{habit.name}</span>
+                                                {habitStatus[habit.id] && (
+                                                    <span className="checkmark">✓</span>
+                                                )}
+                                            </label>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Notes Section */}
+                            <div className="notes-section">
+                                <h3>Notes (Optional)</h3>
+                                <textarea
+                                    className="notes-input"
+                                    placeholder="How did today go? Any reflections or insights..."
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    onBlur={handleSaveNotes}
+                                    rows={4}
+                                />
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
         </div>

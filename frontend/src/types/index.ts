@@ -1,28 +1,37 @@
 export interface Habit {
-    habitId: string;
+    id: string;
+    habitId?: string;
     name: string;
-    category: string;
-    color: string;
-    createdAt: any;
-    isActive: boolean;
-    completionRate: number;
-    frequency: string;
+    icon?: string;
+    order: number;
     isCompleted?: boolean;
+    // Keep existing fields if needed for compatibility, or remove if unused
+    category?: string;
+    color?: string;
+    createdAt?: any;
+    isActive?: boolean;
+    completionRate?: number;
+    frequency?: string;
 }
 
 export interface Day {
+    id: string;
     dayId: string;
-    date: any;
     dayNumber: number;
-    dateLabel: string;
-    completedHabits: string[];
-    totalHabits: number;
-    completionPercentage: number;
-    isCompleted: boolean;
-    notes: string;
-    lastUpdated: any;
-    habitsDueForDay: string[];
+    date: string;
+    dateLabel?: string;
     habits?: Habit[];
+    completedHabits?: string[];
+    habitsDueForDay?: string[];
+    completionPercentage: number;
+    totalHabits?: number;
+    completedHabitsCount?: number;
+    notes?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    // Keep existing fields if needed
+    isCompleted?: boolean;
+    lastUpdated?: any;
 }
 
 export interface User {

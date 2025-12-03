@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTrackerStore } from '../store/useTrackerStore';
 import api from '../services/api';
 
-const DEMO_USER_ID = 'demo-user-123';
+const DEMO_USER_ID = 'lWKwaToLPHNhf6tsdiTot1yzxHW2';
 
 const Settings: React.FC = () => {
     const { habits, setHabits, isDarkMode, toggleDarkMode, showToast } = useTrackerStore();
@@ -12,10 +12,12 @@ const Settings: React.FC = () => {
 
     const loadHabits = React.useCallback(async () => {
         try {
-            const habitsData = await api.getHabits(DEMO_USER_ID);
-            setHabits(habitsData);
+            console.log('🔍 Loading habits for user:', DEMO_USER_ID);
+            const habitsResponse = await api.getHabits(DEMO_USER_ID);
+            setHabits(habitsResponse.habits);
+            console.log('✅ Habits loaded:', habitsResponse.habits.length);
         } catch (error) {
-            console.error('Failed to load habits:', error);
+            console.error('❌ Failed to load habits:', error);
         }
     }, [setHabits]);
 
@@ -164,7 +166,7 @@ const Settings: React.FC = () => {
                     <div className="space-y-2">
                         {habits.map((habit) => (
                             <div
-                                key={habit.habitId}
+                                key={habit.habitId || habit.id}
                                 className="flex items-center justify-between p-4 bg-neutral-50 dark:bg-neutral-700/50 rounded-premium hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
                             >
                                 <div className="flex items-center gap-3">
@@ -182,7 +184,7 @@ const Settings: React.FC = () => {
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => handleDeleteHabit(habit.habitId)}
+                                    onClick={() => handleDeleteHabit(habit.habitId || habit.id)}
                                     className="text-red-500 hover:text-red-700 font-medium text-sm"
                                 >
                                     Delete

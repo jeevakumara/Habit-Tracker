@@ -6,7 +6,7 @@ import WeeklyPieChart from '../components/analytics/WeeklyPieChart';
 import HeatmapCalendar from '../components/analytics/HeatmapCalendar';
 import api from '../services/api';
 
-const DEMO_USER_ID = 'demo-user-123';
+const DEMO_USER_ID = 'lWKwaToLPHNhf6tsdiTot1yzxHW2';
 
 const Analytics: React.FC = () => {
     const { chartData, setChartData, analytics, setAnalytics, setLoading } = useTrackerStore();

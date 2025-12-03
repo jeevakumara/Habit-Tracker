@@ -8,8 +8,8 @@ import DailyProgressChart from '../components/analytics/DailyProgressChart';
 import api from '../services/api';
 import { Day } from '../types';
 
-// Demo user ID for now (in production, get from auth)
-const DEMO_USER_ID = 'demo-user-123';
+// Use actual Firebase user ID
+const DEMO_USER_ID = 'lWKwaToLPHNhf6tsdiTot1yzxHW2';
 
 const Dashboard: React.FC = () => {
     const {
@@ -29,11 +29,13 @@ const Dashboard: React.FC = () => {
 
     const loadData = React.useCallback(async () => {
         try {
+            console.log('📡 Loading dashboard data for user:', DEMO_USER_ID);
             setLoading(true);
 
             // Load all days
-            const daysData = await api.getDays(DEMO_USER_ID);
-            setDays(daysData);
+            const daysResponse = await api.getDays(DEMO_USER_ID);
+            setDays(daysResponse.days);
+            console.log('✅ Days loaded:', daysResponse.days.length);
 
             // Load analytics summary
             const analyticsData = await api.getAnalyticsSummary(DEMO_USER_ID);
@@ -43,8 +45,9 @@ const Dashboard: React.FC = () => {
             const charts = await api.getChartData(DEMO_USER_ID);
             setChartData(charts);
 
+            console.log('✅ Dashboard data loaded successfully');
         } catch (error: any) {
-            console.error('Failed to load data:', error);
+            console.error('❌ Failed to load data:', error);
             showToast('Failed to load data. Please check if backend is running.', 'error');
         } finally {
             setLoading(false);
@@ -67,10 +70,13 @@ const Dashboard: React.FC = () => {
 
     useEffect(() => {
         if (selectedDayId) {
-            const day = days.find(d => d.dayId === selectedDayId);
+            const day = days.find(d => (d.dayId || d.id) === selectedDayId);
             if (day) {
                 // Load full day data with habits
                 loadDayWithHabits(selectedDayId);
+            } else {
+                console.warn('❓ Selected day not found in days array:', selectedDayId);
+                setSelectedDay(null);
             }
         } else {
             setSelectedDay(null);

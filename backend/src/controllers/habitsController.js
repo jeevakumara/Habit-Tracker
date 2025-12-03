@@ -1,151 +1,149 @@
 import { db } from '../config/firebase.js';
-import { getCurrentDayNumber } from '../utils/dateUtils.js';
 
-/**
- * Get all habits for a user
- */
-export async function getAllHabits(req, res) {
+export async function getHabits(req, res) {
     try {
         const { userId } = req.params;
+        console.log('🔍 getHabits REQUEST:', { url: req.url, params: req.params, userId });
 
-        const habitsSnapshot = await db.collection('users').doc(userId).collection('habits')
-            .where('isActive', '==', true)
+        const habitsSnapshot = await db
+            .collection('users')
+            .doc(userId)
+            .collection('habits')
+            .orderBy('order', 'asc')
             .get();
 
-        const habits = [];
-        habitsSnapshot.forEach(doc => {
-            habits.push({
-                habitId: doc.id,
-                ...doc.data()
-            });
+        console.log(`🔍 getHabits: userId=${userId}, found=${habitsSnapshot.size}`);
+
+        const habits = habitsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            habitId: doc.id, // ✅ Add habitId for compatibility
+            ...doc.data()
+        }));
+
+        // ✅ CRITICAL FIX: Return proper format
+        res.json({
+            success: true,
+            habits: habits,
+            count: habits.length
         });
-
-        res.json(habits);
-
     } catch (error) {
         console.error('Get habits error:', error);
-        res.status(500).json({ error: 'Failed to get habits' });
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
     }
 }
 
-/**
- * Add new habit
- */
-export async function addHabit(req, res) {
+export async function createHabit(req, res) {
     try {
         const { userId } = req.params;
-        const { name, category, color } = req.body;
+        const habitData = req.body;
 
-        if (!name) {
-            return res.status(400).json({ error: 'Habit name required' });
-        }
-
-        // Add habit to habits collection
-        const habitRef = await db.collection('users').doc(userId).collection('habits').add({
-            name,
-            category: category || 'habits',
-            color: color || '#6B7280',
-            createdAt: new Date(),
-            isActive: true,
-            completionRate: 0,
-            frequency: 'daily'
-        });
-
-        // Get current day number to determine which days to update
-        const currentDayNumber = getCurrentDayNumber();
-
-        if (currentDayNumber) {
-            // Update all incomplete days (from current day onwards)
-            const daysSnapshot = await db.collection('users').doc(userId).collection('days')
-                .where('dayNumber', '>=', currentDayNumber)
-                .get();
-
-            const batch = db.batch();
-
-            daysSnapshot.forEach(doc => {
-                const dayData = doc.data();
-
-                // Only update if day is not fully completed
-                if (!dayData.isCompleted || dayData.completionPercentage < 100) {
-                    const updatedHabitsDue = [...(dayData.habitsDueForDay || []), habitRef.id];
-                    const updatedTotalHabits = updatedHabitsDue.length;
-
-                    // Recalculate completion percentage
-                    const completedCount = dayData.completedHabits?.length || 0;
-                    const newCompletionPercentage = Math.round((completedCount / updatedTotalHabits) * 100);
-
-                    batch.update(doc.ref, {
-                        habitsDueForDay: updatedHabitsDue,
-                        totalHabits: updatedTotalHabits,
-                        completionPercentage: newCompletionPercentage,
-                        isCompleted: newCompletionPercentage === 100
-                    });
-                }
+        const habitRef = await db
+            .collection('users')
+            .doc(userId)
+            .collection('habits')
+            .add({
+                ...habitData,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
             });
 
-            await batch.commit();
-        }
+        const newHabit = await habitRef.get();
 
+        // ✅ CRITICAL FIX: Add success flag
         res.status(201).json({
-            message: 'Habit added successfully',
-            habitId: habitRef.id,
+            success: true,
             habit: {
-                habitId: habitRef.id,
-                name,
-                category: category || 'habits',
-                color: color || '#6B7280',
-                isActive: true
+                id: habitRef.id,
+                ...newHabit.data()
             }
         });
-
     } catch (error) {
-        console.error('Add habit error:', error);
-        res.status(500).json({ error: 'Failed to add habit' });
+        console.error('Create habit error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
     }
 }
 
-/**
- * Update habit
- */
 export async function updateHabit(req, res) {
     try {
         const { userId, habitId } = req.params;
         const updates = req.body;
 
-        // Remove fields that shouldn't be updated directly
-        delete updates.habitId;
-        delete updates.createdAt;
-        delete updates.completionRate;
+        const habitRef = db
+            .collection('users')
+            .doc(userId)
+            .collection('habits')
+            .doc(habitId);
 
-        await db.collection('users').doc(userId).collection('habits').doc(habitId).update({
+        const habitDoc = await habitRef.get();
+
+        if (!habitDoc.exists) {
+            return res.status(404).json({
+                success: false,
+                error: 'Habit not found'
+            });
+        }
+
+        await habitRef.update({
             ...updates,
-            updatedAt: new Date()
+            updatedAt: new Date().toISOString()
         });
 
-        res.json({ message: 'Habit updated successfully' });
+        const updatedHabit = await habitRef.get();
 
+        // ✅ CRITICAL FIX: Add success flag
+        res.json({
+            success: true,
+            habit: {
+                id: habitRef.id,
+                ...updatedHabit.data()
+            }
+        });
     } catch (error) {
         console.error('Update habit error:', error);
-        res.status(500).json({ error: 'Failed to update habit' });
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
     }
 }
 
-/**
- * Delete habit (soft delete)
- */
 export async function deleteHabit(req, res) {
     try {
         const { userId, habitId } = req.params;
 
-        await db.collection('users').doc(userId).collection('habits').doc(habitId).update({
-            isActive: false,
-            deletedAt: new Date()
+        const habitRef = db
+            .collection('users')
+            .doc(userId)
+            .collection('habits')
+            .doc(habitId);
+
+        const habitDoc = await habitRef.get();
+
+        if (!habitDoc.exists) {
+            return res.status(404).json({
+                success: false,
+                error: 'Habit not found'
+            });
+        }
+
+        await habitRef.delete();
+
+        // ✅ CRITICAL FIX: Add success flag
+        res.json({
+            success: true,
+            message: 'Habit deleted successfully'
         });
-
-        res.json({ message: 'Habit deleted successfully' });
-
     } catch (error) {
         console.error('Delete habit error:', error);
-        res.status(500).json({ error: 'Failed to delete habit' });
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
     }
 }

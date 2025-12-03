@@ -1,0 +1,546 @@
+{
+    "info": {
+        "_postman_id": "a17231a3-9127-45f9-8158-75f352fa9fdd",
+        "name": "90-Day Tracker API",
+        "description": "API collection for the 90-Day Tracker application.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Health Check",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/health",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "health"
+                    ]
+                },
+                "description": "Health check endpoint to verify API status"
+            },
+            "response": []
+        },
+        {
+            "name": "Auth",
+            "item": [
+                {
+                    "name": "Register",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"password123\",\n    \"name\": \"Test User\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/register",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "register"
+                            ]
+                        },
+                        "description": "Register a new user"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "description": "Login user and get token"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get User Profile",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/users/:userId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "users",
+                                ":userId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "description": "Get user profile details"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Habits",
+            "item": [
+                {
+                    "name": "Get All Habits",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/users/:userId/habits",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "users",
+                                ":userId",
+                                "habits"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "description": "Get all habits for a user"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Habit",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"New Habit\",\n    \"description\": \"Description of the habit\",\n    \"targetDays\": 90\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/users/:userId/habits",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "users",
+                                ":userId",
+                                "habits"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "description": "Create a new habit"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Habit",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Updated Habit Name\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/users/:userId/habits/:habitId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "users",
+                                ":userId",
+                                "habits",
+                                ":habitId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "habitId",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "description": "Update an existing habit"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Habit",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/users/:userId/habits/:habitId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "users",
+                                ":userId",
+                                "habits",
+                                ":habitId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "habitId",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "description": "Delete a habit"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Days",
+            "item": [
+                {
+                    "name": "Get All Days",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/users/:userId/days",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "users",
+                                ":userId",
+                                "days"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "description": "Get all tracked days for a user"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Day Data",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/users/:userId/days/:dayId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "users",
+                                ":userId",
+                                "days",
+                                ":dayId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "dayId",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "description": "Get specific day data"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Day Habits",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"habits\": [\n        { \"habitId\": \"123\", \"completed\": true }\n    ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/users/:userId/days/:dayId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "users",
+                                ":userId",
+                                "days",
+                                ":dayId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "dayId",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "description": "Update habit completion status for a day"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Day Notes",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"notes\": \"Today was a good day.\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/users/:userId/days/:dayId/notes",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "users",
+                                ":userId",
+                                "days",
+                                ":dayId",
+                                "notes"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "dayId",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "description": "Add or update notes for a specific day"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Analytics",
+            "item": [
+                {
+                    "name": "Get Summary",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/users/:userId/analytics/summary",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "users",
+                                ":userId",
+                                "analytics",
+                                "summary"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "description": "Get overall analytics summary"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Monthly Breakdown",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/users/:userId/analytics/monthly/:month",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "users",
+                                ":userId",
+                                "analytics",
+                                "monthly",
+                                ":month"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "month",
+                                    "value": "2025-12"
+                                }
+                            ]
+                        },
+                        "description": "Get monthly breakdown of habit performance"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Habit Analytics",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/users/:userId/analytics/habit/:habitId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "users",
+                                ":userId",
+                                "analytics",
+                                "habit",
+                                ":habitId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "habitId",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "description": "Get analytics for a specific habit"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Chart Data",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/users/:userId/analytics/charts",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "users",
+                                ":userId",
+                                "analytics",
+                                "charts"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "description": "Get data formatted for charts"
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:5000",
+            "type": "string"
+        }
+    ]
+}
