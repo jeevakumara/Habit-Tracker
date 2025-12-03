@@ -1,7 +1,14 @@
 import admin from 'firebase-admin';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
-dotenv.config();
+// Get the directory name in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load .env from backend root (two levels up from config folder)
+dotenv.config({ path: join(__dirname, '../../.env') });
 
 // Initialize Firebase Admin SDK
 console.log('Loading Firebase Config...');

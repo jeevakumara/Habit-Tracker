@@ -34,18 +34,15 @@ const Navigation: React.FC = () => {
 };
 
 const AppContent: React.FC = () => {
-  const { isDarkMode, setDarkMode } = useTrackerStore();
+  const { isDarkMode, toggleDarkMode } = useTrackerStore();
 
   useEffect(() => {
     const savedMode = storage.getItem('darkMode') === 'true';
-    setDarkMode(savedMode);
-    if (savedMode) document.documentElement.classList.add('dark');
-  }, [setDarkMode]);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', isDarkMode);
-    storage.setItem('darkMode', isDarkMode.toString());
-  }, [isDarkMode]);
+    // If saved mode is different from current mode, toggle it
+    if (savedMode !== isDarkMode) {
+      toggleDarkMode();
+    }
+  }, []); // Only run once on mount
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-blue-50 dark:from-neutral-900 dark:via-neutral-800 dark:to-neutral-900">
