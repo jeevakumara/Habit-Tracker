@@ -1,5 +1,9 @@
 # 90-Day Habit Tracker
 
+[![Security](https://img.shields.io/badge/Security-Hardened-green)](./SECURITY.md) [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue)](./.github/workflows/ci.yml) [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](./docker-compose.yml)
+
+> ⚠️ **CRITICAL:** Configure Firebase credentials before running. See [SECURITY.md](./SECURITY.md)
+
 A personal 90-day self-improvement challenge tracker (Dec 1, 2025 → Feb 28, 2026) with real-time progress visualization, advanced analytics, and premium UI/UX inspired by Google and Zoho design systems.
 
 ## 🚀 Quick Start
