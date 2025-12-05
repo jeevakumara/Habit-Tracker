@@ -19,7 +19,7 @@ const userId = 'lWKwaToLPHNhf6tsdiTot1yzxHW2';
 async function run() {
     const snap = await db.collection('users').doc(userId).collection('habits').get();
     console.log('Habits count:', snap.size);
-    snap.forEach(doc => console.log(doc.id, doc.data().name));
+    snap.forEach(doc => console.log(doc.id, doc.data().name, doc.data().order));
 }
 
 run().then(() => process.exit());

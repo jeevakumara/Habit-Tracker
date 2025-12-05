@@ -7,3 +7,13 @@ dist/
 coverage/
 .vscode/
 .idea/
+
+# Secrets
+.env
+.env.production
+.env.development
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!routes.json
